@@ -25,7 +25,9 @@ import com.sequenceiq.cloudbreak.util.NullUtil;
 import com.sequenceiq.common.api.type.Tunnel;
 import com.sequenceiq.environment.api.v1.environment.model.EnvironmentNetworkAwsParams;
 import com.sequenceiq.environment.api.v1.environment.model.EnvironmentNetworkAzureParams;
+import com.sequenceiq.environment.api.v1.environment.model.EnvironmentNetworkGcpParams;
 import com.sequenceiq.environment.api.v1.environment.model.EnvironmentNetworkMockParams;
+import com.sequenceiq.environment.api.v1.environment.model.EnvironmentNetworkOpenstackParams;
 import com.sequenceiq.environment.api.v1.environment.model.EnvironmentNetworkYarnParams;
 import com.sequenceiq.environment.api.v1.environment.model.base.PrivateSubnetCreation;
 import com.sequenceiq.environment.api.v1.environment.model.request.AttachedFreeIpaRequest;
@@ -40,6 +42,12 @@ import com.sequenceiq.environment.api.v1.environment.model.request.aws.AwsEnviro
 import com.sequenceiq.environment.api.v1.environment.model.request.aws.AwsFreeIpaParameters;
 import com.sequenceiq.environment.api.v1.environment.model.request.aws.AwsFreeIpaSpotParameters;
 import com.sequenceiq.environment.api.v1.environment.model.request.aws.S3GuardRequestParameters;
+import com.sequenceiq.environment.api.v1.environment.model.request.azure.AzureEnvironmentParameters;
+import com.sequenceiq.environment.api.v1.environment.model.request.azure.AzureFreeIpaParameters;
+import com.sequenceiq.environment.api.v1.environment.model.request.gcp.GcpEnvironmentParameters;
+import com.sequenceiq.environment.api.v1.environment.model.request.gcp.GcpFreeIpaParameters;
+import com.sequenceiq.environment.api.v1.environment.model.request.openstack.OpenstackEnvironmentParameters;
+import com.sequenceiq.environment.api.v1.environment.model.request.openstack.OpenstackFreeIpaParameters;
 import com.sequenceiq.environment.api.v1.environment.model.response.DetailedEnvironmentResponse;
 import com.sequenceiq.environment.api.v1.environment.model.response.EnvironmentAuthenticationResponse;
 import com.sequenceiq.environment.api.v1.environment.model.response.EnvironmentCrnResponse;
@@ -65,11 +73,17 @@ import com.sequenceiq.environment.environment.dto.SecurityAccessDto;
 import com.sequenceiq.environment.network.dao.domain.RegistrationType;
 import com.sequenceiq.environment.network.dto.AwsParams;
 import com.sequenceiq.environment.network.dto.AzureParams;
+import com.sequenceiq.environment.network.dto.GcpParams;
 import com.sequenceiq.environment.network.dto.MockParams;
 import com.sequenceiq.environment.network.dto.NetworkDto;
+import com.sequenceiq.environment.network.dto.OpenstackParams;
 import com.sequenceiq.environment.network.dto.YarnParams;
 import com.sequenceiq.environment.network.service.SubnetIdProvider;
+import com.sequenceiq.environment.parameters.dao.domain.GcpParameters;
 import com.sequenceiq.environment.parameters.dto.AwsParametersDto;
+import com.sequenceiq.environment.parameters.dto.AzureParametersDto;
+import com.sequenceiq.environment.parameters.dto.GcpParametersDto;
+import com.sequenceiq.environment.parameters.dto.OpenstackParametersDto;
 import com.sequenceiq.environment.parameters.dto.ParametersDto;
 import com.sequenceiq.environment.telemetry.service.AccountTelemetryService;
 import com.sequenceiq.environment.proxy.v1.converter.ProxyConfigToProxyResponseConverter;
@@ -107,15 +121,15 @@ public class EnvironmentApiConverter {
     private final ProxyConfigToProxyResponseConverter proxyConfigToProxyResponseConverter;
 
     public EnvironmentApiConverter(RegionConverter regionConverter,
-            CredentialToCredentialV1ResponseConverter credentialConverter,
-            CredentialViewConverter credentialViewConverter,
-            TelemetryApiConverter telemetryApiConverter,
-            TunnelConverter tunnelConverter,
-            AccountTelemetryService accountTelemetryService,
-            CredentialService credentialService,
-            SubnetIdProvider subnetIdProvider,
-            FreeIpaConverter freeIpaConverter,
-            ProxyConfigToProxyResponseConverter proxyConfigToProxyResponseConverter) {
+                                   CredentialToCredentialV1ResponseConverter credentialConverter,
+                                   CredentialViewConverter credentialViewConverter,
+                                   TelemetryApiConverter telemetryApiConverter,
+                                   TunnelConverter tunnelConverter,
+                                   AccountTelemetryService accountTelemetryService,
+                                   CredentialService credentialService,
+                                   SubnetIdProvider subnetIdProvider,
+                                   FreeIpaConverter freeIpaConverter,
+                                   ProxyConfigToProxyResponseConverter proxyConfigToProxyResponseConverter) {
         this.regionConverter = regionConverter;
         this.credentialConverter = credentialConverter;
         this.credentialViewConverter = credentialViewConverter;
@@ -155,6 +169,15 @@ public class EnvironmentApiConverter {
                 .withParameters(awsParamsToParametersDto(
                         request.getAws(),
                         Optional.ofNullable(request.getFreeIpa()).map(AttachedFreeIpaRequest::getAws).orElse(null)))
+                .withParameters(azureParamsToParametersDto(
+                        request.getAzure(),
+                        Optional.ofNullable(request.getFreeIpa()).map(AttachedFreeIpaRequest::getAzure).orElse(null)))
+                .withParameters(gcpParamsToParametersDto(
+                        request.getGcp(),
+                        Optional.ofNullable(request.getFreeIpa()).map(AttachedFreeIpaRequest::getGcp).orElse(null)))
+                .withParameters(openstackParamsToParametersDto(
+                        request.getOpenstack(),
+                        Optional.ofNullable(request.getFreeIpa()).map(AttachedFreeIpaRequest::getOpenstack).orElse(null)))
                 .withParentEnvironmentName(request.getParentEnvironmentName())
                 .withProxyConfigName(request.getProxyConfigName());
 
@@ -217,6 +240,51 @@ public class EnvironmentApiConverter {
                 .build();
     }
 
+    private ParametersDto azureParamsToParametersDto(AzureEnvironmentParameters azure, AzureFreeIpaParameters azureFreeIpa) {
+        if (Objects.isNull(azure) && Objects.isNull(azureFreeIpa)) {
+            return null;
+        }
+
+        return ParametersDto.builder()
+                .withAzureParameters(azureParamsToAzureParameters(azure, azureFreeIpa))
+                .build();
+    }
+
+    private AzureParametersDto azureParamsToAzureParameters(AzureEnvironmentParameters azure, AzureFreeIpaParameters azureFreeIpa) {
+        return AzureParametersDto.builder()
+                .build();
+    }
+
+    private ParametersDto openstackParamsToParametersDto(OpenstackEnvironmentParameters openstack, OpenstackFreeIpaParameters openstackFreeIpa) {
+        if (Objects.isNull(openstack) && Objects.isNull(openstackFreeIpa)) {
+            return null;
+        }
+
+        return ParametersDto.builder()
+                .withOpenstackParameters(openstackParamsToOpenstackParameters(openstack, openstackFreeIpa))
+                .build();
+    }
+
+    private OpenstackParametersDto openstackParamsToOpenstackParameters(OpenstackEnvironmentParameters openstack, OpenstackFreeIpaParameters openstackFreeIpa) {
+        return OpenstackParametersDto.builder()
+                .build();
+    }
+
+    private ParametersDto gcpParamsToParametersDto(GcpEnvironmentParameters gcp, GcpFreeIpaParameters gcpFreeIpa) {
+        if (Objects.isNull(gcp) && Objects.isNull(gcpFreeIpa)) {
+            return null;
+        }
+
+        return ParametersDto.builder()
+                .withGcpParameters(gcpParamsToGcpParameters(gcp, gcpFreeIpa))
+                .build();
+    }
+
+    private GcpParametersDto gcpParamsToGcpParameters(GcpEnvironmentParameters gcp, GcpFreeIpaParameters gcpFreeIpa) {
+        return GcpParametersDto.builder()
+                .build();
+    }
+
     public LocationDto locationRequestToDto(LocationRequest location) {
         return LocationDto.builder()
                 .withName(location.getName())
@@ -250,6 +318,24 @@ public class EnvironmentApiConverter {
             YarnParams yarnParams = new YarnParams();
             yarnParams.setQueue(network.getYarn().getQueue());
             builder.withYarn(yarnParams);
+        }
+        if (network.getOpenstack() != null) {
+            LOGGER.debug(NETWORK_CONVERT_MESSAGE_TEMPLATE, "Openstack");
+            OpenstackParams osParams = new OpenstackParams();
+            osParams.setRouterId(network.getOpenstack().getRouterId());
+            osParams.setPublicNetId(network.getOpenstack().getPublicNetId());
+            osParams.setNetworkingOption(network.getOpenstack().getNetworkingOption());
+            osParams.setNetworkId(network.getOpenstack().getNetworkId());
+            builder.withOpenstack(osParams);
+        }
+        if (network.getGcp() != null) {
+            LOGGER.debug(NETWORK_CONVERT_MESSAGE_TEMPLATE, "Gcp");
+            GcpParams gcpParams = new GcpParams();
+            gcpParams.setNetworkId(network.getGcp().getNetworkId());
+            gcpParams.setNoFirewallRules(network.getGcp().getNoFirewallRules());
+            gcpParams.setNoPublicIp(network.getGcp().getNoPublicIp());
+            gcpParams.setSharedProjectId(network.getGcp().getSharedProjectId());
+            builder.withGcp(gcpParams);
         }
         if (network.getSubnetIds() != null) {
             builder.withSubnetMetas(network.getSubnetIds().stream()
@@ -329,6 +415,9 @@ public class EnvironmentApiConverter {
                 .withCloudStorageValidation(environmentDto.getExperimentalFeatures().getCloudStorageValidation())
                 .withAdminGroupName(environmentDto.getAdminGroupName())
                 .withAws(getIfNotNull(environmentDto.getParameters(), this::awsEnvParamsToAwsEnvironmentParams))
+                .withGcp(getIfNotNull(environmentDto.getParameters(), this::gcpEnvParamsToGcpEnvironmentParams))
+                .withOpenstack(getIfNotNull(environmentDto.getParameters(), this::osEnvParamsToOsEnvironmentParams))
+                .withAzure(getIfNotNull(environmentDto.getParameters(), this::azureEnvParamsToAzureEnvironmentParams))
                 .withParentEnvironmentCrn(environmentDto.getParentEnvironmentCrn())
                 .withParentEnvironmentName(environmentDto.getParentEnvironmentName())
                 .withParentEnvironmentCloudPlatform(environmentDto.getParentEnvironmentCloudPlatform());
@@ -361,6 +450,9 @@ public class EnvironmentApiConverter {
                 .withTelemetry(telemetryApiConverter.convert(environmentDto.getTelemetry()))
                 .withRegions(regionConverter.convertRegions(environmentDto.getRegions()))
                 .withAws(getIfNotNull(environmentDto.getParameters(), this::awsEnvParamsToAwsEnvironmentParams))
+                .withAzure(getIfNotNull(environmentDto.getParameters(), this::azureEnvParamsToAzureEnvironmentParams))
+                .withGcp(getIfNotNull(environmentDto.getParameters(), this::gcpEnvParamsToGcpEnvironmentParams))
+                .withOpenstack(getIfNotNull(environmentDto.getParameters(), this::osEnvParamsToOsEnvironmentParams))
                 .withParentEnvironmentName(environmentDto.getParentEnvironmentName());
 
         NullUtil.doIfNotNull(environmentDto.getProxyConfig(),
@@ -373,6 +465,21 @@ public class EnvironmentApiConverter {
     private AwsEnvironmentParameters awsEnvParamsToAwsEnvironmentParams(ParametersDto parameters) {
         return AwsEnvironmentParameters.builder()
                 .withS3guard(getIfNotNull(parameters.getAwsParametersDto(), this::awsParametersToS3guardParam))
+                .build();
+    }
+
+    private AzureEnvironmentParameters azureEnvParamsToAzureEnvironmentParams(ParametersDto parameters) {
+        return AzureEnvironmentParameters.builder()
+                .build();
+    }
+
+    private GcpEnvironmentParameters gcpEnvParamsToGcpEnvironmentParams(ParametersDto parameters) {
+        return GcpEnvironmentParameters.builder()
+                .build();
+    }
+
+    private OpenstackEnvironmentParameters osEnvParamsToOsEnvironmentParams(ParametersDto parameters) {
+        return OpenstackEnvironmentParameters.builder()
                 .build();
     }
 
@@ -420,6 +527,20 @@ public class EnvironmentApiConverter {
                         .withVpcId(p.getVpcId())
                         .withInternetGatewayId(p.getInternetGatewayId())
                         .build()))
+                .withGcp(getIfNotNull(network.getGcp(), p -> EnvironmentNetworkGcpParams.EnvironmentNetworkGcpParamsBuilder
+                        .anEnvironmentNetworkGcpParamsBuilder()
+                        .withNetworkId(p.getNetworkId())
+                        .withNoFirewallRules(p.getNoFirewallRules())
+                        .withNoPublicIp(p.getNoPublicIp())
+                        .withSharedProjectId(p.getSharedProjectId())
+                        .build()))
+                .withOpenstack(getIfNotNull(network.getOpenstack(), p -> EnvironmentNetworkOpenstackParams.EnvironmentNetworkOpenstackParamsBuilder
+                        .anEnvironmentNetworkOpenstackParamsBuilder()
+                        .withNetworkId(p.getNetworkId())
+                        .withNetworkingOption(p.getNetworkingOption())
+                        .withPublicNetId(p.getPublicNetId())
+                        .withRouterId(p.getRouterId())
+                        .build()))
                 .build();
     }
 
@@ -446,6 +567,9 @@ public class EnvironmentApiConverter {
                 accountTelemetryService.getOrDefault(accountId).getFeatures())));
         NullUtil.doIfNotNull(request.getSecurityAccess(), securityAccess -> builder.withSecurityAccess(securityAccessRequestToDto(securityAccess)));
         NullUtil.doIfNotNull(request.getAws(), awsParams -> builder.withParameters(awsParamsToParametersDto(awsParams, null)));
+        NullUtil.doIfNotNull(request.getAzure(), azureParams -> builder.withParameters(azureParamsToParametersDto(azureParams, null)));
+        NullUtil.doIfNotNull(request.getGcp(), gcpParams -> builder.withParameters(gcpParamsToParametersDto(gcpParams, null)));
+        NullUtil.doIfNotNull(request.getOpenstack(), osParams -> builder.withParameters(openstackParamsToParametersDto(osParams, null)));
         return builder.build();
     }
 

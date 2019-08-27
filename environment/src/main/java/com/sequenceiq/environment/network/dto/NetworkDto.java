@@ -32,6 +32,10 @@ public class NetworkDto {
 
     private final MockParams mock;
 
+    private final GcpParams gcp;
+
+    private final OpenstackParams openstack;
+
     private final String networkCidr;
 
     private Map<String, CloudSubnet> subnetMetas;
@@ -62,6 +66,8 @@ public class NetworkDto {
         mlxSubnets = builder.mlxSubnets;
         networkCidr = builder.networkCidr;
         networkId = builder.networkId;
+        gcp = builder.gcp;
+        openstack = builder.openstack;
         privateSubnetCreation = builder.privateSubnetCreation;
         registrationType = builder.registrationType;
         cloudPlatform = builder.cloudPlatform;
@@ -105,6 +111,14 @@ public class NetworkDto {
 
     public MockParams getMock() {
         return mock;
+    }
+
+    public GcpParams getGcp() {
+        return gcp;
+    }
+
+    public OpenstackParams getOpenstack() {
+        return openstack;
     }
 
     public Set<String> getSubnetIds() {
@@ -194,6 +208,10 @@ public class NetworkDto {
 
         private YarnParams yarn;
 
+        private OpenstackParams openstack;
+
+        private GcpParams gcp;
+
         private MockParams mock;
 
         private Map<String, CloudSubnet> subnetMetas;
@@ -232,6 +250,8 @@ public class NetworkDto {
             cbSubnets = networkDto.cbSubnets;
             mlxSubnets = networkDto.mlxSubnets;
             dwxSubnets = networkDto.dwxSubnets;
+            openstack = networkDto.openstack;
+            gcp = networkDto.gcp;
         }
 
         public Builder withId(Long id) {
@@ -256,9 +276,19 @@ public class NetworkDto {
             return this;
         }
 
+        public Builder withOpenstack(OpenstackParams openstack) {
+            this.openstack = openstack;
+            return this;
+        }
+
         public Builder withYarn(YarnParams yarn) {
             this.yarn = yarn;
             cloudPlatform = CloudPlatform.YARN;
+            return this;
+        }
+
+        public Builder withGcp(GcpParams gcp) {
+            this.gcp = gcp;
             return this;
         }
 

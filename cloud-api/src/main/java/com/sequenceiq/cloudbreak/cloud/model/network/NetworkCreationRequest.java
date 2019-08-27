@@ -23,6 +23,8 @@ public class NetworkCreationRequest {
 
     private final String creatorCrn;
 
+    private String accountId;
+
     private final Region region;
 
     private final String networkCidr;
@@ -55,6 +57,7 @@ public class NetworkCreationRequest {
         userName = builder.userName;
         creatorCrn = builder.creatorCrn;
         tags = builder.tags;
+        accountId = builder.accountId;
     }
 
     public String getEnvName() {
@@ -117,6 +120,10 @@ public class NetworkCreationRequest {
         return tags;
     }
 
+    public String getAccountId() {
+        return accountId;
+    }
+
     public static class Builder {
         private Long envId;
 
@@ -145,6 +152,8 @@ public class NetworkCreationRequest {
         private boolean privateSubnetEnabled;
 
         private String creatorCrn;
+
+        private String accountId;
 
         private Map<String, String> tags = new HashMap<>();
 
@@ -210,6 +219,11 @@ public class NetworkCreationRequest {
 
         public Builder withUserName(String userName) {
             this.userName = userName;
+            return this;
+        }
+
+        public Builder withAccountId(String accountId) {
+            this.accountId = accountId;
             return this;
         }
 

@@ -8,6 +8,9 @@ import com.sequenceiq.environment.api.doc.environment.EnvironmentModelDescriptio
 import com.sequenceiq.environment.api.v1.environment.model.base.CloudStorageValidation;
 import com.sequenceiq.environment.api.v1.environment.model.base.IdBrokerMappingSource;
 import com.sequenceiq.environment.api.v1.environment.model.request.aws.AwsEnvironmentParameters;
+import com.sequenceiq.environment.api.v1.environment.model.request.azure.AzureEnvironmentParameters;
+import com.sequenceiq.environment.api.v1.environment.model.request.gcp.GcpEnvironmentParameters;
+import com.sequenceiq.environment.api.v1.environment.model.request.openstack.OpenstackEnvironmentParameters;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -87,6 +90,15 @@ public abstract class EnvironmentBaseResponse {
 
     @ApiModelProperty(EnvironmentModelDescription.PARENT_ENVIRONMENT_CLOUD_PLATFORM)
     private String parentEnvironmentCloudPlatform;
+
+    @ApiModelProperty(EnvironmentModelDescription.AZURE_PARAMETERS)
+    private AzureEnvironmentParameters azure;
+
+    @ApiModelProperty(EnvironmentModelDescription.GCP_PARAMETERS)
+    private GcpEnvironmentParameters gcp;
+
+    @ApiModelProperty(EnvironmentModelDescription.OPENSTACK_PARAMETERS)
+    private OpenstackEnvironmentParameters openstack;
 
     public String getCrn() {
         return crn;
@@ -286,5 +298,29 @@ public abstract class EnvironmentBaseResponse {
 
     public void setParentEnvironmentCloudPlatform(String parentEnvironmentCloudPlatform) {
         this.parentEnvironmentCloudPlatform = parentEnvironmentCloudPlatform;
+    }
+
+    public AzureEnvironmentParameters getAzure() {
+        return azure;
+    }
+
+    public void setAzure(AzureEnvironmentParameters azure) {
+        this.azure = azure;
+    }
+
+    public GcpEnvironmentParameters getGcp() {
+        return gcp;
+    }
+
+    public void setGcp(GcpEnvironmentParameters gcp) {
+        this.gcp = gcp;
+    }
+
+    public OpenstackEnvironmentParameters getOpenstack() {
+        return openstack;
+    }
+
+    public void setOpenstack(OpenstackEnvironmentParameters openstack) {
+        this.openstack = openstack;
     }
 }

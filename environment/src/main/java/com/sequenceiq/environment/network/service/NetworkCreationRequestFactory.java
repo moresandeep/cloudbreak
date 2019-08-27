@@ -62,6 +62,7 @@ public class NetworkCreationRequestFactory {
                 .withNetworkCidr(networkDto.getNetworkCidr())
                 .withPrivateSubnetEnabled(getPrivateSubnetEnabled(environment))
                 .withUserName(getUserFromCrn(environment.getCreator()))
+                .withAccountId(environment.getAccountId())
                 .withCreatorCrn(environment.getCreator())
                 .withTags(costTagging.mergeTags(mergeRequest))
                 .withPrivateSubnets(cidrs.getPrivateSubnets())

@@ -5,6 +5,10 @@ import com.sequenceiq.common.api.telemetry.response.TelemetryResponse;
 import com.sequenceiq.common.api.type.Tunnel;
 import com.sequenceiq.environment.api.v1.credential.model.response.CredentialViewResponse;
 import com.sequenceiq.environment.api.v1.environment.model.request.aws.AwsEnvironmentParameters;
+import com.sequenceiq.environment.api.v1.environment.model.request.azure.AzureEnvironmentParameters;
+import com.sequenceiq.environment.api.v1.environment.model.request.gcp.GcpEnvironmentParameters;
+import com.sequenceiq.environment.api.v1.environment.model.request.openstack.OpenstackEnvironmentParameters;
+import com.sequenceiq.environment.api.v1.environment.model.request.yarn.YarnEnvironmentParameters;
 import com.sequenceiq.environment.api.v1.proxy.model.response.ProxyViewResponse;
 
 import io.swagger.annotations.ApiModel;
@@ -79,6 +83,14 @@ public class SimpleEnvironmentResponse extends EnvironmentBaseResponse {
         private String parentEnvironmentName;
 
         private ProxyViewResponse proxyConfig;
+
+        private AzureEnvironmentParameters azure;
+
+        private GcpEnvironmentParameters gcp;
+
+        private YarnEnvironmentParameters yarn;
+
+        private OpenstackEnvironmentParameters openstack;
 
         private Builder() {
         }
@@ -188,6 +200,21 @@ public class SimpleEnvironmentResponse extends EnvironmentBaseResponse {
             return this;
         }
 
+        public Builder withAzure(AzureEnvironmentParameters azure) {
+            this.azure = azure;
+            return this;
+        }
+
+        public Builder withGcp(GcpEnvironmentParameters gcp) {
+            this.gcp = gcp;
+            return this;
+        }
+
+        public Builder withOpenstack(OpenstackEnvironmentParameters openstack) {
+            this.openstack = openstack;
+            return this;
+        }
+
         public SimpleEnvironmentResponse build() {
             SimpleEnvironmentResponse simpleEnvironmentResponse = new SimpleEnvironmentResponse();
             simpleEnvironmentResponse.setCrn(crn);
@@ -207,6 +234,9 @@ public class SimpleEnvironmentResponse extends EnvironmentBaseResponse {
             simpleEnvironmentResponse.setTelemetry(telemetry);
             simpleEnvironmentResponse.setTunnel(tunnel);
             simpleEnvironmentResponse.setAws(aws);
+            simpleEnvironmentResponse.setAzure(azure);
+            simpleEnvironmentResponse.setOpenstack(openstack);
+            simpleEnvironmentResponse.setGcp(gcp);
             simpleEnvironmentResponse.setAdminGroupName(adminGroupName);
             simpleEnvironmentResponse.setTags(tags);
             simpleEnvironmentResponse.setParentEnvironmentName(parentEnvironmentName);

@@ -7,9 +7,12 @@ import com.sequenceiq.common.api.telemetry.response.TelemetryResponse;
 import com.sequenceiq.common.api.type.Tunnel;
 import com.sequenceiq.environment.api.doc.environment.EnvironmentModelDescription;
 import com.sequenceiq.environment.api.v1.credential.model.response.CredentialResponse;
-import com.sequenceiq.environment.api.v1.environment.model.base.IdBrokerMappingSource;
 import com.sequenceiq.environment.api.v1.environment.model.base.CloudStorageValidation;
+import com.sequenceiq.environment.api.v1.environment.model.base.IdBrokerMappingSource;
 import com.sequenceiq.environment.api.v1.environment.model.request.aws.AwsEnvironmentParameters;
+import com.sequenceiq.environment.api.v1.environment.model.request.azure.AzureEnvironmentParameters;
+import com.sequenceiq.environment.api.v1.environment.model.request.gcp.GcpEnvironmentParameters;
+import com.sequenceiq.environment.api.v1.environment.model.request.openstack.OpenstackEnvironmentParameters;
 import com.sequenceiq.environment.api.v1.proxy.model.response.ProxyResponse;
 
 import io.swagger.annotations.ApiModel;
@@ -96,6 +99,12 @@ public class DetailedEnvironmentResponse extends EnvironmentBaseResponse {
         private String parentEnvironmentCloudPlatform;
 
         private ProxyResponse proxyConfig;
+
+        private AzureEnvironmentParameters azure;
+
+        private GcpEnvironmentParameters gcp;
+
+        private OpenstackEnvironmentParameters openstack;
 
         private Builder() {
         }
@@ -239,6 +248,21 @@ public class DetailedEnvironmentResponse extends EnvironmentBaseResponse {
             return this;
         }
 
+        public Builder withAzure(AzureEnvironmentParameters azure) {
+            this.azure = azure;
+            return this;
+        }
+
+        public Builder withGcp(GcpEnvironmentParameters gcp) {
+            this.gcp = gcp;
+            return this;
+        }
+
+        public Builder withOpenstack(OpenstackEnvironmentParameters openstack) {
+            this.openstack = openstack;
+            return this;
+        }
+
         public DetailedEnvironmentResponse build() {
             DetailedEnvironmentResponse detailedEnvironmentResponse = new DetailedEnvironmentResponse();
             detailedEnvironmentResponse.setCrn(crn);
@@ -268,6 +292,9 @@ public class DetailedEnvironmentResponse extends EnvironmentBaseResponse {
             detailedEnvironmentResponse.setParentEnvironmentName(parentEnvironmentName);
             detailedEnvironmentResponse.setParentEnvironmentCloudPlatform(parentEnvironmentCloudPlatform);
             detailedEnvironmentResponse.setProxyConfig(proxyConfig);
+            detailedEnvironmentResponse.setAzure(azure);
+            detailedEnvironmentResponse.setOpenstack(openstack);
+            detailedEnvironmentResponse.setGcp(gcp);
             return detailedEnvironmentResponse;
         }
     }

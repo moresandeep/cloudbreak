@@ -10,17 +10,20 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 
+import com.sequenceiq.authorization.annotation.ResourceObjectField;
 import com.sequenceiq.authorization.resource.AuthorizationResourceAction;
 import com.sequenceiq.authorization.resource.AuthorizationResourceType;
 import com.sequenceiq.authorization.resource.AuthorizationVariableType;
-import com.sequenceiq.authorization.annotation.ResourceObjectField;
 import com.sequenceiq.common.api.telemetry.request.TelemetryRequest;
 import com.sequenceiq.common.api.type.Tunnel;
 import com.sequenceiq.environment.api.doc.ModelDescriptions;
 import com.sequenceiq.environment.api.doc.environment.EnvironmentModelDescription;
-import com.sequenceiq.environment.api.v1.environment.model.base.IdBrokerMappingSource;
 import com.sequenceiq.environment.api.v1.environment.model.base.CloudStorageValidation;
+import com.sequenceiq.environment.api.v1.environment.model.base.IdBrokerMappingSource;
 import com.sequenceiq.environment.api.v1.environment.model.request.aws.AwsEnvironmentParameters;
+import com.sequenceiq.environment.api.v1.environment.model.request.azure.AzureEnvironmentParameters;
+import com.sequenceiq.environment.api.v1.environment.model.request.gcp.GcpEnvironmentParameters;
+import com.sequenceiq.environment.api.v1.environment.model.request.openstack.OpenstackEnvironmentParameters;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -101,6 +104,17 @@ public class EnvironmentRequest extends EnvironmentBaseRequest implements Creden
 
     @ApiModelProperty(value = EnvironmentModelDescription.PARENT_ENVIRONMENT_NAME)
     private String parentEnvironmentName;
+
+    @ApiModelProperty(EnvironmentModelDescription.AZURE_PARAMETERS)
+    private AzureEnvironmentParameters azure;
+
+    @Valid
+    @ApiModelProperty(EnvironmentModelDescription.GCP_PARAMETERS)
+    private GcpEnvironmentParameters gcp;
+
+    @Valid
+    @ApiModelProperty(EnvironmentModelDescription.OPENSTACK_PARAMETERS)
+    private OpenstackEnvironmentParameters openstack;
 
     public AttachedFreeIpaRequest getFreeIpa() {
         return freeIpa;
@@ -254,5 +268,29 @@ public class EnvironmentRequest extends EnvironmentBaseRequest implements Creden
 
     public void setProxyConfigName(String proxyConfigName) {
         this.proxyConfigName = proxyConfigName;
+    }
+
+    public AzureEnvironmentParameters getAzure() {
+        return azure;
+    }
+
+    public void setAzure(AzureEnvironmentParameters azure) {
+        this.azure = azure;
+    }
+
+    public GcpEnvironmentParameters getGcp() {
+        return gcp;
+    }
+
+    public void setGcp(GcpEnvironmentParameters gcp) {
+        this.gcp = gcp;
+    }
+
+    public OpenstackEnvironmentParameters getOpenstack() {
+        return openstack;
+    }
+
+    public void setOpenstack(OpenstackEnvironmentParameters openstack) {
+        this.openstack = openstack;
     }
 }
