@@ -2,6 +2,7 @@ package com.sequenceiq.authorization;
 
 import static org.junit.Assert.assertTrue;
 
+import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.Set;
@@ -12,6 +13,7 @@ import javax.ws.rs.Path;
 import org.reflections.Reflections;
 import org.reflections.scanners.FieldAnnotationsScanner;
 import org.reflections.scanners.MemberUsageScanner;
+import org.reflections.scanners.MethodParameterScanner;
 import org.reflections.scanners.SubTypesScanner;
 import org.reflections.scanners.TypeAnnotationsScanner;
 import org.springframework.stereotype.Controller;
@@ -20,6 +22,8 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.Sets;
 import com.sequenceiq.authorization.annotation.AuthorizationResource;
 import com.sequenceiq.authorization.annotation.DisableCheckPermissions;
+import com.sequenceiq.authorization.annotation.ResourceObject;
+import com.sequenceiq.authorization.resource.AuthorizableRequestObject;
 import com.sequenceiq.authorization.util.AuthorizationAnnotationUtils;
 
 public class EnforceAuthorizationAnnotationsUtil {
@@ -27,6 +31,7 @@ public class EnforceAuthorizationAnnotationsUtil {
     private static final Reflections REFLECTIONS = new Reflections("com.sequenceiq",
             new FieldAnnotationsScanner(),
             new TypeAnnotationsScanner(),
+            new MethodParameterScanner(),
             new SubTypesScanner(false),
             new MemberUsageScanner());
 
@@ -69,5 +74,17 @@ public class EnforceAuthorizationAnnotationsUtil {
 
         assertTrue("These controller methods are missing any authorization related annotation: "
                         + Joiner.on(",").join(methodsWithoutAnnotation), methodsWithoutAnnotation.size() == 0);
+    }
+
+    public static void testIfRequestObjectsAreAuthorizedProperly() {
+        Set<String> resourceObjectsParamWithoutInterface = Sets.newHashSet();
+        Set<Method> methodsAnnotatedWith = REFLECTIONS.getMethodsWithAnyParamAnnotated(ResourceObject.class);
+        methodsAnnotatedWith.stream().forEach(method -> Arrays.stream(method.getParameters()).forEach(parameter -> {
+            if (parameter.isAnnotationPresent(ResourceObject.class) && !AuthorizableRequestObject.class.isAssignableFrom(parameter.getType())) {
+                resourceObjectsParamWithoutInterface.add(method.getDeclaringClass().getSimpleName() + "#" + method.getName() + "#" + parameter.getName());
+            }
+        }));
+        assertTrue("These method parameter' type should inherit AuthorizableRequestObject: "
+                + Joiner.on(",").join(resourceObjectsParamWithoutInterface), resourceObjectsParamWithoutInterface.size() == 0);
     }
 }

@@ -20,4 +20,9 @@ public class EnforceAuthorizationAnnotationsTest {
     public void testIfControllerMethodsHaveProperAuthorizationAnnotation() {
         EnforceAuthorizationAnnotationsUtil.testIfControllerMethodsHaveProperAuthorizationAnnotation();
     }
+
+    @Test
+    public void testIfRequestObjectsAreAuthorizedProperly() {
+        EnforceAuthorizationAnnotationsUtil.testIfRequestObjectsAreAuthorizedProperly();
+    }
 }

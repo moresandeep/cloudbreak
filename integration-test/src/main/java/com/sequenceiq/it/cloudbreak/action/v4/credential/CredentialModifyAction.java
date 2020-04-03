@@ -3,6 +3,7 @@ package com.sequenceiq.it.cloudbreak.action.v4.credential;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.sequenceiq.environment.api.v1.credential.model.request.CredentialModifyRequest;
 import com.sequenceiq.it.cloudbreak.EnvironmentClient;
 import com.sequenceiq.it.cloudbreak.action.Action;
 import com.sequenceiq.it.cloudbreak.context.TestContext;
@@ -15,11 +16,12 @@ public class CredentialModifyAction implements Action<CredentialTestDto, Environ
 
     @Override
     public CredentialTestDto action(TestContext testContext, CredentialTestDto testDto, EnvironmentClient cloudbreakClient) throws Exception {
-        Log.whenJson(LOGGER, " Credential modifyV4 request:\n", testDto.getRequest());
+        CredentialModifyRequest request = (CredentialModifyRequest) testDto.getRequest();
+        Log.whenJson(LOGGER, " Credential modifyV4 request:\n", request);
         testDto.setResponse(
                 cloudbreakClient.getEnvironmentClient()
                         .credentialV1Endpoint()
-                        .put(testDto.getRequest()));
+                        .put(request));
         Log.whenJson(LOGGER, " Credential modified successfully:\n", testDto.getResponse());
         Log.when(LOGGER, String.format(" CRN: %s", testDto.getResponse().getCrn()));
 

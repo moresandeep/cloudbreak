@@ -34,6 +34,7 @@ import com.sequenceiq.cloudbreak.cloud.response.CredentialPrerequisitesResponse;
 import com.sequenceiq.cloudbreak.common.mappable.CloudPlatform;
 import com.sequenceiq.cloudbreak.event.ResourceEvent;
 import com.sequenceiq.environment.api.v1.credential.endpoint.CredentialEndpoint;
+import com.sequenceiq.environment.api.v1.credential.model.request.CredentialModifyRequest;
 import com.sequenceiq.environment.api.v1.credential.model.request.CredentialRequest;
 import com.sequenceiq.environment.api.v1.credential.model.response.CredentialResponse;
 import com.sequenceiq.environment.api.v1.credential.model.response.CredentialResponses;
@@ -146,8 +147,8 @@ public class CredentialV1Controller extends NotificationController implements Cr
 
     @Override
     @CheckPermissionByResourceObject
-    public CredentialResponse put(@ResourceObject @Valid CredentialRequest credentialRequest) {
-        Credential credential = credentialConverter.convert(credentialRequest);
+    public CredentialResponse put(@ResourceObject @Valid CredentialModifyRequest credentialModifyRequest) {
+        Credential credential = credentialConverter.convert(credentialModifyRequest);
         credential = credentialService.updateByAccountId(credential, ThreadBasedUserCrnProvider.getAccountId());
         notify(ResourceEvent.CREDENTIAL_MODIFIED);
         return credentialConverter.convert(credential);

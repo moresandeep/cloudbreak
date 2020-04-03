@@ -1,28 +1,26 @@
 package com.sequenceiq.authorization.service;
 
 import java.lang.annotation.Annotation;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
+import javax.ws.rs.InternalServerErrorException;
 
-import org.apache.commons.lang3.reflect.FieldUtils;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Component;
 
 import com.sequenceiq.authorization.annotation.CheckPermissionByResourceObject;
 import com.sequenceiq.authorization.annotation.ResourceObject;
+import com.sequenceiq.authorization.resource.AuthorizableRequestObject;
 import com.sequenceiq.authorization.resource.AuthorizationResourceAction;
 import com.sequenceiq.authorization.resource.AuthorizationResourceType;
 import com.sequenceiq.authorization.resource.AuthorizationVariableType;
-import com.sequenceiq.authorization.annotation.ResourceObjectField;
 
 @Component
 public class ResourceObjectPermissionChecker implements PermissionChecker<CheckPermissionByResourceObject> {
@@ -53,28 +51,19 @@ public class ResourceObjectPermissionChecker implements PermissionChecker<CheckP
     }
 
     private void checkPermissionOnResourceObjectFields(String userCrn, Object resourceObject) {
-        Arrays.stream(FieldUtils.getFieldsWithAnnotation(resourceObject.getClass(), ResourceObjectField.class)).forEach(field -> {
-            try {
-                field.setAccessible(true);
-                ResourceObjectField resourceObjectField = field.getAnnotation(ResourceObjectField.class);
-                Object resultObject = field.get(resourceObject);
-                if (!(resultObject instanceof String)) {
-                    throw new AccessDeniedException("Annotated field within resource object is not string, thus access is denied!");
-                }
-                String resourceNameOrCrn = (String) resultObject;
-                String resourceCrn = resourceObjectField.variableType().equals(AuthorizationVariableType.NAME)
-                        ? resourceBasedCrnProviderMap.get(resourceObjectField.type()).getResourceCrnByResourceName(resourceNameOrCrn)
-                        : resourceNameOrCrn;
-                AuthorizationResourceAction action = resourceObjectField.action();
-                checkActionType(resourceObjectField.type(), action);
-                commonPermissionCheckingUtils.checkPermissionForUserOnResource(resourceObjectField.type(), action, userCrn, resourceCrn);
-            } catch (AccessDeniedException e) {
-                LOGGER.error("Error happened while traversing the resource object: ", e);
-                throw e;
-            } catch (Exception e) {
-                LOGGER.error("Error happened while traversing the resource object: ", e);
-                throw new AccessDeniedException("Error happened during permission check of resource object, thus access is denied!", e);
-            }
+        if (!(resourceObject instanceof AuthorizableRequestObject)) {
+            throw new InternalServerErrorException("Request object should be an instance of AuthorizableRequestObject");
+        }
+        AuthorizableRequestObject requestObject = (AuthorizableRequestObject) resourceObject;
+        requestObject.authorizableFieldInfos().forEach(fieldInfo -> {
+            String resourceNameOrCrn = fieldInfo.getValue();
+            AuthorizationResourceType resourceType = fieldInfo.getResourceType();
+            AuthorizationResourceAction action = fieldInfo.getResourceAction();
+            checkActionType(resourceType, action);
+            String resourceCrn = fieldInfo.getVariableType().equals(AuthorizationVariableType.NAME)
+                    ? resourceBasedCrnProviderMap.get(resourceType).getResourceCrnByResourceName(resourceNameOrCrn)
+                    : resourceNameOrCrn;
+            commonPermissionCheckingUtils.checkPermissionForUserOnResource(resourceType, action, userCrn, resourceCrn);
         });
     }
 
