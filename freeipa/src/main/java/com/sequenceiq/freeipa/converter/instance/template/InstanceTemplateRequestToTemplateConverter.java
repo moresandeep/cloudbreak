@@ -1,5 +1,6 @@
 package com.sequenceiq.freeipa.converter.instance.template;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -17,6 +18,7 @@ import com.sequenceiq.cloudbreak.common.converter.MissingResourceNameGenerator;
 import com.sequenceiq.cloudbreak.common.json.Json;
 import com.sequenceiq.cloudbreak.common.mappable.CloudPlatform;
 import com.sequenceiq.cloudbreak.common.type.APIResourceType;
+import com.sequenceiq.common.api.type.EncryptionType;
 import com.sequenceiq.freeipa.api.model.ResourceStatus;
 import com.sequenceiq.freeipa.api.v1.freeipa.stack.model.common.instance.InstanceTemplateRequest;
 import com.sequenceiq.freeipa.api.v1.freeipa.stack.model.common.instance.VolumeRequest;
@@ -47,10 +49,17 @@ public class InstanceTemplateRequestToTemplateConverter {
         template.setStatus(ResourceStatus.USER_MANAGED);
         setVolumesProperty(source.getAttachedVolumes(), template, cloudPlatform);
         template.setInstanceType(Objects.requireNonNullElse(source.getInstanceType(), defaultInstanceTypeProvider.getForPlatform(cloudPlatform.name())));
+        Map<String, Object> attributes = new HashMap<>();
+        if (cloudPlatform == CloudPlatform.AWS) {
+            // FIXME Enable EBS encryption with appropriate KMS key
+            attributes.put("encrypted", Boolean.TRUE);
+            attributes.put("type", EncryptionType.DEFAULT.name());
+        }
         Optional.ofNullable(source.getAws())
                 .map(AwsInstanceTemplateParameters::getSpot)
                 .map(AwsInstanceTemplateSpotParameters::getPercentage)
-                .ifPresent(spotPercentage -> template.setAttributes(new Json(Map.of("spotPercentage", spotPercentage))));
+                .ifPresent(spotPercentage -> attributes.put("spotPercentage", spotPercentage));
+        template.setAttributes(new Json(attributes));
         return template;
     }
 

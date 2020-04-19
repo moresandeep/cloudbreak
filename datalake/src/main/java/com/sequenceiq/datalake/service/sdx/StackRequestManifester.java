@@ -18,6 +18,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.base.Strings;
 import com.sequenceiq.cloudbreak.api.endpoint.v4.common.StackType;
 import com.sequenceiq.cloudbreak.api.endpoint.v4.stacks.base.parameter.stack.YarnStackV4Parameters;
+import com.sequenceiq.cloudbreak.api.endpoint.v4.stacks.base.parameter.template.AwsEncryptionV4Parameters;
+import com.sequenceiq.cloudbreak.api.endpoint.v4.stacks.base.parameter.template.AwsInstanceTemplateV4Parameters;
 import com.sequenceiq.cloudbreak.api.endpoint.v4.stacks.request.StackV4Request;
 import com.sequenceiq.cloudbreak.api.endpoint.v4.stacks.request.authentication.StackAuthenticationV4Request;
 import com.sequenceiq.cloudbreak.api.endpoint.v4.stacks.request.cluster.ClusterV4Request;
@@ -40,6 +42,7 @@ import com.sequenceiq.common.api.telemetry.request.LoggingRequest;
 import com.sequenceiq.common.api.telemetry.request.TelemetryRequest;
 import com.sequenceiq.common.api.telemetry.response.LoggingResponse;
 import com.sequenceiq.common.api.telemetry.response.TelemetryResponse;
+import com.sequenceiq.common.api.type.EncryptionType;
 import com.sequenceiq.common.api.type.InstanceGroupType;
 import com.sequenceiq.common.model.CloudIdentityType;
 import com.sequenceiq.datalake.controller.exception.BadRequestException;
@@ -119,6 +122,7 @@ public class StackRequestManifester {
             prepareTelemetryForStack(stackRequest, environment, sdxCluster);
             setupCloudStorageAccountMapping(stackRequest, environment.getCrn(), environment.getIdBrokerMappingSource(), environment.getCloudPlatform());
             cloudStorageValidator.validate(stackRequest.getCluster().getCloudStorage(), environment, new ValidationResult.ValidationResultBuilder());
+            setupInstanceVolumeEncryption(stackRequest, environment.getCloudPlatform());
             return stackRequest;
         } catch (IOException e) {
             LOGGER.error("Can not parse JSON to stack request");
@@ -252,4 +256,22 @@ public class StackRequestManifester {
                     stackName, environmentCrn);
         }
     }
+
+    private void setupInstanceVolumeEncryption(StackV4Request stackRequest, String cloudPlatform) {
+        if (CloudPlatform.AWS.name().equals(cloudPlatform)) {
+            stackRequest.getInstanceGroups().forEach(ig -> {
+                AwsInstanceTemplateV4Parameters aws = ig.getTemplate().createAws();
+                AwsEncryptionV4Parameters encryption = aws.getEncryption();
+                if (encryption == null) {
+                    encryption = new AwsEncryptionV4Parameters();
+                    aws.setEncryption(encryption);
+                }
+                if (encryption.getType() == null || encryption.getType() == EncryptionType.NONE) {
+                    // FIXME Enable EBS encryption with appropriate KMS key
+                    encryption.setType(EncryptionType.DEFAULT);
+                }
+            });
+        }
+    }
+
 }
