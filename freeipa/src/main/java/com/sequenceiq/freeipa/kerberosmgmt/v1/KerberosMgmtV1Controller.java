@@ -5,13 +5,13 @@ import javax.transaction.Transactional;
 import javax.validation.Valid;
 import javax.validation.constraints.NotEmpty;
 
-import com.sequenceiq.authorization.annotation.DisableCheckPermissions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
 
 import com.sequenceiq.authorization.annotation.AuthorizationResource;
 import com.sequenceiq.authorization.annotation.CheckPermissionByAccount;
+import com.sequenceiq.authorization.annotation.DisableCheckPermissions;
 import com.sequenceiq.authorization.resource.AuthorizationResourceAction;
 import com.sequenceiq.authorization.resource.AuthorizationResourceType;
 import com.sequenceiq.authorization.service.UmsAccountAuthorizationService;
@@ -39,8 +39,6 @@ public class KerberosMgmtV1Controller implements KerberosMgmtV1Endpoint {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(KerberosMgmtV1Controller.class);
 
-    private static final String GET_USER_KEYTAB_RIGHT = "environments/getKeytab";
-
     private static final String KEYTAB_CREATION_FAILED = "Keytab creation failed.";
 
     private static final String DELETION_FAILED = "Deletion failed.";
@@ -61,7 +59,7 @@ public class KerberosMgmtV1Controller implements KerberosMgmtV1Endpoint {
     private RetryableFreeIpaClientService retryableFreeIpaClientService;
 
     @CheckPermissionByAccount(action = AuthorizationResourceAction.WRITE)
-    public ServiceKeytabResponse generateServiceKeytab(@Valid ServiceKeytabRequest request) throws KeytabCreationException {
+    public ServiceKeytabResponse generateServiceKeytab(@Valid ServiceKeytabRequest request) {
         return retryableWithKeytabCreationException((Void v) -> {
             String accountId = crnService.getCurrentAccountId();
             return kerberosMgmtV1Service.generateServiceKeytab(request, accountId);
@@ -69,7 +67,7 @@ public class KerberosMgmtV1Controller implements KerberosMgmtV1Endpoint {
     }
 
     @CheckPermissionByAccount(action = AuthorizationResourceAction.READ)
-    public ServiceKeytabResponse getServiceKeytab(@Valid ServiceKeytabRequest request) throws KeytabCreationException {
+    public ServiceKeytabResponse getServiceKeytab(@Valid ServiceKeytabRequest request) {
         return retryableWithKeytabCreationException((Void v) -> {
             String accountId = crnService.getCurrentAccountId();
             return kerberosMgmtV1Service.getExistingServiceKeytab(request, accountId);
@@ -77,7 +75,7 @@ public class KerberosMgmtV1Controller implements KerberosMgmtV1Endpoint {
     }
 
     @CheckPermissionByAccount(action = AuthorizationResourceAction.WRITE)
-    public HostKeytabResponse generateHostKeytab(@Valid HostKeytabRequest request) throws KeytabCreationException {
+    public HostKeytabResponse generateHostKeytab(@Valid HostKeytabRequest request) {
         return retryableWithKeytabCreationException((Void v) -> {
             String accountId = crnService.getCurrentAccountId();
             return kerberosMgmtV1Service.generateHostKeytab(request, accountId);
@@ -85,7 +83,7 @@ public class KerberosMgmtV1Controller implements KerberosMgmtV1Endpoint {
     }
 
     @CheckPermissionByAccount(action = AuthorizationResourceAction.READ)
-    public HostKeytabResponse getHostKeytab(@Valid HostKeytabRequest request) throws KeytabCreationException {
+    public HostKeytabResponse getHostKeytab(@Valid HostKeytabRequest request) {
         return retryableWithKeytabCreationException((Void v) -> {
             String accountId = crnService.getCurrentAccountId();
             return kerberosMgmtV1Service.getExistingHostKeytab(request, accountId);
@@ -93,7 +91,7 @@ public class KerberosMgmtV1Controller implements KerberosMgmtV1Endpoint {
     }
 
     @CheckPermissionByAccount(action = AuthorizationResourceAction.WRITE)
-    public void deleteServicePrincipal(@Valid ServicePrincipalRequest request) throws DeleteException {
+    public void deleteServicePrincipal(@Valid ServicePrincipalRequest request) {
         retryableWithDeletionException((Void v) -> {
             String accountId = crnService.getCurrentAccountId();
             kerberosMgmtV1Service.deleteServicePrincipal(request, accountId);
@@ -102,7 +100,7 @@ public class KerberosMgmtV1Controller implements KerberosMgmtV1Endpoint {
     }
 
     @CheckPermissionByAccount(action = AuthorizationResourceAction.WRITE)
-    public void deleteHost(@Valid HostRequest request) throws DeleteException {
+    public void deleteHost(@Valid HostRequest request) {
         retryableWithDeletionException((Void v) -> {
             String accountId = crnService.getCurrentAccountId();
             kerberosMgmtV1Service.deleteHost(request, accountId);
@@ -111,13 +109,13 @@ public class KerberosMgmtV1Controller implements KerberosMgmtV1Endpoint {
     }
 
     @CheckPermissionByAccount(action = AuthorizationResourceAction.WRITE)
-    public void cleanupClusterSecrets(@Valid VaultCleanupRequest request) throws DeleteException {
+    public void cleanupClusterSecrets(@Valid VaultCleanupRequest request) {
         String accountId = crnService.getCurrentAccountId();
         kerberosMgmtV1Service.cleanupByCluster(request, accountId);
     }
 
     @CheckPermissionByAccount(action = AuthorizationResourceAction.WRITE)
-    public void cleanupEnvironmentSecrets(String environmentCrn) throws DeleteException {
+    public void cleanupEnvironmentSecrets(String environmentCrn) {
         String accountId = crnService.getCurrentAccountId();
         kerberosMgmtV1Service.cleanupByEnvironment(environmentCrn, accountId);
     }
@@ -140,7 +138,7 @@ public class KerberosMgmtV1Controller implements KerberosMgmtV1Endpoint {
         return userCrn;
     }
 
-    private <T> T retryableWithKeytabCreationException(CheckedFunction<Void, T, Exception> f) throws KeytabCreationException {
+    private <T> T retryableWithKeytabCreationException(CheckedFunction<Void, T, Exception> f) {
         try {
             return retryableFreeIpaClientService.invokeWithRetries(f);
         } catch (KeytabCreationException e) {
@@ -158,7 +156,7 @@ public class KerberosMgmtV1Controller implements KerberosMgmtV1Endpoint {
         }
     }
 
-    private <T> T retryableWithDeletionException(CheckedFunction<Void, T, Exception> f) throws DeleteException {
+    private <T> T retryableWithDeletionException(CheckedFunction<Void, T, Exception> f) {
         try {
             return retryableFreeIpaClientService.invokeWithRetries(f);
         } catch (DeleteException e) {
