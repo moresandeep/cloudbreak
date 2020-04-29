@@ -17,3 +17,22 @@ upgrade-cloudera-agent:
     - failhard: True
     - require:
         - sls: cloudera.repo
+
+
+inituids_dir_exists:
+  file.directory:
+    - name: /opt/cloudera/cm-agent/service/inituids
+    - user: cloudera-scm
+    - group: cloudera-scm
+    - dir_mode: 755
+    - makedirs: True
+
+set_service_uids_migrate:
+  cmd.run:
+    - name: /opt/cloudera/cm-agent/service/inituids/set-service-uids.py -m -l DEBUG && echo $(date +%Y-%m-%d:%H:%M:%S) >> /var/log/set-service-uids-executed
+    - cwd: /opt/cloudera/cm-agent/service/inituids
+    - failhard: True
+    - onlyif: test -f /opt/cloudera/cm-agent/service/inituids/set-service-uids.py
+    - unless: test -f /var/log/set-service-uids-executed
+    - require:
+        - file: inituids_dir_exists
