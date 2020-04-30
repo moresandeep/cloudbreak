@@ -12,77 +12,24 @@ import javax.inject.Inject;
 import org.testng.annotations.Test;
 
 import com.sequenceiq.cloudbreak.api.endpoint.v4.stacks.base.InstanceStatus;
-import com.sequenceiq.it.cloudbreak.client.RecipeTestClient;
 import com.sequenceiq.it.cloudbreak.client.SdxTestClient;
-import com.sequenceiq.it.cloudbreak.client.StackTestClient;
 import com.sequenceiq.it.cloudbreak.context.Description;
 import com.sequenceiq.it.cloudbreak.context.TestContext;
 import com.sequenceiq.it.cloudbreak.dto.sdx.SdxTestDto;
 import com.sequenceiq.it.cloudbreak.util.SdxUtil;
-import com.sequenceiq.it.cloudbreak.util.ssh.SshJUtil;
 import com.sequenceiq.it.cloudbreak.util.wait.WaitUtil;
 import com.sequenceiq.sdx.api.model.SdxClusterStatusResponse;
 
-public class SdxRepairTests extends PreconditionSdxE2ETest {
+public class SdxStopRepairTests extends PreconditionSdxE2ETest {
 
     @Inject
     private SdxTestClient sdxTestClient;
 
     @Inject
-    private RecipeTestClient recipeTestClient;
-
-    @Inject
-    private StackTestClient stackTestClient;
-
-    @Inject
     private WaitUtil waitUtil;
 
     @Inject
-    private SshJUtil sshJUtil;
-
-    @Inject
     private SdxUtil sdxUtil;
-
-    @Test(dataProvider = TEST_CONTEXT)
-    @Description(
-            given = "there is a running Cloudbreak, and an SDX cluster in available state",
-            when = "recovery called on the IDBROKER and MASTER host group, where the EC2 instance had been terminated",
-            then = "SDX recovery should be successful, the cluster should be up and running"
-    )
-    public void testSDXMultiRepairIDBRokerAndMasterWithTerminatedEC2Instances(TestContext testContext) {
-        String sdx = resourcePropertyProvider().getName();
-
-        List<String> actualVolumeIds = new ArrayList<>();
-        List<String> expectedVolumeIds = new ArrayList<>();
-
-        testContext
-                .given(sdx, SdxTestDto.class).withCloudStorage()
-                .when(sdxTestClient.create(), key(sdx))
-                .awaitForFlow(key(sdx))
-                .await(SdxClusterStatusResponse.RUNNING, key(sdx))
-                .then((tc, testDto, client) -> waitUtil.waitForSdxInstancesStatus(testDto, client, getSdxInstancesHealthyState()))
-                .then((tc, testDto, client) -> {
-                    List<String> instancesToDelete = sdxUtil.getInstanceIds(testDto, client, MASTER.getName());
-                    instancesToDelete.addAll(sdxUtil.getInstanceIds(testDto, client, IDBROKER.getName()));
-                    expectedVolumeIds.addAll(getCloudFunctionality(tc).listInstanceVolumeIds(instancesToDelete));
-                    getCloudFunctionality(tc).deleteInstances(instancesToDelete);
-                    return testDto;
-                })
-                .then((tc, testDto, client) -> waitUtil.waitForSdxInstancesStatus(testDto, client, getSdxInstancesDeletedOnProviderSideState()))
-                .when(sdxTestClient.repair(), key(sdx))
-                .await(SdxClusterStatusResponse.REPAIR_IN_PROGRESS, key(sdx))
-                .awaitForFlow(key(sdx))
-                .await(SdxClusterStatusResponse.RUNNING, key(sdx))
-                .then((tc, testDto, client) -> waitUtil.waitForSdxInstancesStatus(testDto, client, getSdxInstancesHealthyState()))
-                .then((tc, testDto, client) -> {
-                    List<String> instanceIds = sdxUtil.getInstanceIds(testDto, client, MASTER.getName());
-                    instanceIds.addAll(sdxUtil.getInstanceIds(testDto, client, IDBROKER.getName()));
-                    actualVolumeIds.addAll(getCloudFunctionality(tc).listInstanceVolumeIds(instanceIds));
-                    return testDto;
-                })
-                .then((tc, testDto, client) -> compareVolumeIdsAfterRepair(testDto, actualVolumeIds, expectedVolumeIds))
-                .validate();
-    }
 
     @Test(dataProvider = TEST_CONTEXT)
     @Description(

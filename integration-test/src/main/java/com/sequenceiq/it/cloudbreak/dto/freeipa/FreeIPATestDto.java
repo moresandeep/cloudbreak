@@ -176,6 +176,16 @@ public class FreeIPATestDto extends AbstractFreeIPATestDto<CreateFreeIpaRequest,
                 return volumeRequest;
             })
             .collect(Collectors.toSet()));
+//        Optional.ofNullable(request.getTemplate().getAws())
+//                .map(AwsInstanceTemplateV4Parameters::getSpot)
+//                .map(AwsInstanceTemplateV4SpotParameters::getPercentage)
+//                .ifPresent(spotPercentage -> {
+//                    AwsInstanceTemplateParameters awsInstanceTemplateParameters = new AwsInstanceTemplateParameters();
+//                    AwsInstanceTemplateSpotParameters awsInstanceTemplateSpotParameters = new AwsInstanceTemplateSpotParameters();
+//                    awsInstanceTemplateSpotParameters.setPercentage(spotPercentage);
+//                    awsInstanceTemplateParameters.setSpot(awsInstanceTemplateSpotParameters);
+//                    template.setAws(awsInstanceTemplateParameters);
+//                });
         return template;
     }
 

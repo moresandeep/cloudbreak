@@ -6,8 +6,11 @@ import static org.junit.Assert.assertThat;
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
 
+import org.testng.annotations.BeforeClass;
+
 import com.sequenceiq.cloudbreak.common.mappable.CloudPlatform;
 import com.sequenceiq.it.TestParameter;
+import com.sequenceiq.it.cloudbreak.cloud.v4.aws.AwsCloudProvider;
 import com.sequenceiq.it.cloudbreak.context.TestContext;
 import com.sequenceiq.it.cloudbreak.testcase.AbstractIntegrationTest;
 
@@ -18,6 +21,15 @@ public abstract class AbstractE2ETest extends AbstractIntegrationTest {
 
     protected TestParameter getTestParameter() {
         return testParameter;
+    }
+
+    protected void useSpotInstancesOnAws(Boolean useSpotInstancesOnAws) {
+        testParameter.put(AwsCloudProvider.USE_SPOT_INSTANCES_KEY, useSpotInstancesOnAws.toString());
+    }
+
+    @BeforeClass
+    public void resetSpot() {
+        useSpotInstancesOnAws(Boolean.FALSE);
     }
 
     @Override

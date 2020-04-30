@@ -25,6 +25,12 @@ public class SdxCloudStorageTest extends PreconditionSdxE2ETest {
     @Inject
     private WaitUtil waitUtil;
 
+    @Override
+    protected void setupTest(TestContext testContext) {
+        useSpotInstancesOnAws(Boolean.TRUE);
+        super.setupTest(testContext);
+    }
+
     @Test(dataProvider = TEST_CONTEXT)
     @Description(
             given = "there is a running Cloudbreak",

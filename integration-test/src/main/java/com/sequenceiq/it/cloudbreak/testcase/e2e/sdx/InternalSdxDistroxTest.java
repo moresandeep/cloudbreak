@@ -33,6 +33,12 @@ public class InternalSdxDistroxTest extends ImageValidatorE2ETest {
     @Inject
     private TestParameter testParameter;
 
+    @Override
+    protected void setupTest(TestContext testContext) {
+        useSpotInstancesOnAws(Boolean.TRUE);
+        super.setupTest(testContext);
+    }
+
     @Test(dataProvider = TEST_CONTEXT)
     @Description(
             given = "a SDX internal request and a DistroX request",

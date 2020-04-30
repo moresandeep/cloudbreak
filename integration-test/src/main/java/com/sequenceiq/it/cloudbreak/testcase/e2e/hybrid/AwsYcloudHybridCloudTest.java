@@ -97,6 +97,7 @@ public class AwsYcloudHybridCloudTest extends AbstractE2ETest {
             fail(String.format("%s cloud provider is not supported for this test case!", commonCloudProperties.getCloudProvider()));
         }
 
+        useSpotInstancesOnAws(Boolean.TRUE);
         createDefaultUser(testContext);
         createDefaultCredential(testContext);
         //Use a pre-prepared security group what allows inbound connections from ycloud

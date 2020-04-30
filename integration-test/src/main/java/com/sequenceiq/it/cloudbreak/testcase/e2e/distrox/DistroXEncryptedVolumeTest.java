@@ -21,6 +21,7 @@ public class DistroXEncryptedVolumeTest extends AbstractE2ETest {
 
     @Override
     protected void setupTest(TestContext testContext) {
+        useSpotInstancesOnAws(Boolean.TRUE);
         testContext.getCloudProvider().getCloudFunctionality().cloudStorageInitialize();
         createDefaultUser(testContext);
         createDefaultCredential(testContext);

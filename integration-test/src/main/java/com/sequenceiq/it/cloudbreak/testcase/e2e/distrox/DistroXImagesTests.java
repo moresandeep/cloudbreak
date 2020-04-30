@@ -45,6 +45,7 @@ public class DistroXImagesTests extends AbstractE2ETest {
 
     @Override
     protected void setupTest(TestContext testContext) {
+        useSpotInstancesOnAws(Boolean.TRUE);
         createDefaultUser(testContext);
         createDefaultCredential(testContext);
         createEnvironmentWithNetworkAndFreeIPA(testContext);
