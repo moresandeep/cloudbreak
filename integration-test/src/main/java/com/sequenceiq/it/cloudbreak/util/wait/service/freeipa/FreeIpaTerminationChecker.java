@@ -1,6 +1,9 @@
 package com.sequenceiq.it.cloudbreak.util.wait.service.freeipa;
 
+import static com.sequenceiq.freeipa.api.v1.freeipa.stack.model.common.Status.DELETE_COMPLETED;
 import static com.sequenceiq.freeipa.api.v1.freeipa.stack.model.common.Status.DELETE_FAILED;
+
+import java.util.Map;
 
 import javax.ws.rs.ProcessingException;
 
@@ -78,21 +81,33 @@ public class FreeIpaTerminationChecker<T extends FreeIpaWaitObject> extends Exce
             }
             return status.isFailed();
         } catch (ProcessingException clientException) {
-            StringBuilder builder = new StringBuilder("Exit waiting! Failed to get freeIpa due to API client exception: ")
-                    .append(System.lineSeparator())
-                    .append(clientException.getMessage())
-                    .append(System.lineSeparator())
-                    .append(clientException);
-            LOGGER.error(builder.toString());
+            String builder = "Exit waiting! Failed to get freeIpa due to API client exception: " +
+                    System.lineSeparator() +
+                    clientException.getMessage() +
+                    System.lineSeparator() +
+                    clientException;
+            LOGGER.error(builder);
         } catch (Exception e) {
-            StringBuilder builder = new StringBuilder("Exit waiting! Failed to get freeIpa, because of: ")
-                    .append(System.lineSeparator())
-                    .append(e.getMessage())
-                    .append(System.lineSeparator())
-                    .append(e);
-            LOGGER.error(builder.toString());
+            String builder = "Exit waiting! Failed to get freeIpa, because of: " +
+                    System.lineSeparator() +
+                    e.getMessage() +
+                    System.lineSeparator() +
+                    e;
+            LOGGER.error(builder);
             return true;
         }
         return false;
+    }
+
+    @Override
+    public Map<String, String> getStatuses(T waitObject) {
+        String environmentCrn = waitObject.getEnvironmentCrn();
+        try {
+            DescribeFreeIpaResponse freeIpa = waitObject.getEndpoint().describe(environmentCrn);
+            return Map.of("status", freeIpa.getStatus().name());
+        } catch (Exception e) {
+            LOGGER.warn("No freeIpa found with environmentCrn '{}'! It has been deleted successfully.", environmentCrn, e);
+            return Map.of("status", DELETE_COMPLETED.name());
+        }
     }
 }

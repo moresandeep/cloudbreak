@@ -1,5 +1,7 @@
 package com.sequenceiq.it.cloudbreak.util.wait.service;
 
+import java.util.Map;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -49,6 +51,10 @@ public class WaitService<T> {
         }
         LOGGER.debug("Wait exiting.");
         return Result.result(WaitResult.EXIT);
+    }
+
+    public Map<String, String> getStatuses(StatusChecker<T> statusChecker, T t) {
+        return statusChecker.getStatuses(t);
     }
 
     private void sleep(long duration) {

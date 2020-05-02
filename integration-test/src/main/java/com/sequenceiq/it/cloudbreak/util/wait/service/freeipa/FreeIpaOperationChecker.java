@@ -1,5 +1,7 @@
 package com.sequenceiq.it.cloudbreak.util.wait.service.freeipa;
 
+import java.util.Map;
+
 import javax.ws.rs.ProcessingException;
 
 import org.slf4j.Logger;
@@ -99,21 +101,26 @@ public class FreeIpaOperationChecker<T extends FreeIpaWaitObject> extends Except
             }
             return status.isFailed();
         } catch (ProcessingException clientException) {
-            StringBuilder builder = new StringBuilder("Exit waiting! Failed to describe freeIpa cluster due to API client exception: ")
-                    .append(System.lineSeparator())
-                    .append(clientException.getMessage())
-                    .append(System.lineSeparator())
-                    .append(clientException);
-            LOGGER.error(builder.toString());
+            String builder = "Exit waiting! Failed to describe freeIpa cluster due to API client exception: " +
+                    System.lineSeparator() +
+                    clientException.getMessage() +
+                    System.lineSeparator() +
+                    clientException;
+            LOGGER.error(builder);
         } catch (Exception e) {
-            StringBuilder builder = new StringBuilder("Exit waiting! Exception occurred during describing freeIpa for environment: ")
-                    .append(System.lineSeparator())
-                    .append(e.getMessage())
-                    .append(System.lineSeparator())
-                    .append(e);
-            LOGGER.error(builder.toString());
+            String builder = "Exit waiting! Exception occurred during describing freeIpa for environment: " +
+                    System.lineSeparator() +
+                    e.getMessage() +
+                    System.lineSeparator() +
+                    e;
+            LOGGER.error(builder);
             return true;
         }
         return false;
+    }
+
+    @Override
+    public Map<String, String> getStatuses(T waitObject) {
+        return Map.of("status", waitObject.getEndpoint().describe(waitObject.getEnvironmentCrn()).getStatus().name());
     }
 }

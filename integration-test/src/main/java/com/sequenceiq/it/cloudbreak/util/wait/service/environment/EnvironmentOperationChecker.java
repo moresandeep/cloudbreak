@@ -16,6 +16,7 @@ import static com.sequenceiq.environment.api.v1.environment.model.response.Envir
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 import javax.ws.rs.ProcessingException;
 
@@ -112,22 +113,27 @@ public class EnvironmentOperationChecker<T extends EnvironmentWaitObject> extend
             }
             return status.isFailed();
         } catch (ProcessingException clientException) {
-            StringBuilder builder = new StringBuilder("Exit waiting! Failed to get environment due to API client exception: ")
-                    .append(System.lineSeparator())
-                    .append(clientException.getMessage())
-                    .append(System.lineSeparator())
-                    .append(clientException);
-            LOGGER.error(builder.toString());
+            String builder = "Exit waiting! Failed to get environment due to API client exception: " +
+                    System.lineSeparator() +
+                    clientException.getMessage() +
+                    System.lineSeparator() +
+                    clientException;
+            LOGGER.error(builder);
         } catch (Exception e) {
-            StringBuilder builder = new StringBuilder("Exit waiting! Failed to get environment, because of: ")
-                    .append(System.lineSeparator())
-                    .append(e.getMessage())
-                    .append(System.lineSeparator())
-                    .append(e);
-            LOGGER.error(builder.toString());
+            String builder = "Exit waiting! Failed to get environment, because of: " +
+                    System.lineSeparator() +
+                    e.getMessage() +
+                    System.lineSeparator() +
+                    e;
+            LOGGER.error(builder);
             return true;
         }
         return false;
+    }
+
+    @Override
+    public Map<String, String> getStatuses(T waitObject) {
+        return Map.of("status", waitObject.getEndpoint().getByCrn(waitObject.getCrn()).getEnvironmentStatus().name());
     }
 
     private boolean isDeletionInProgress(EnvironmentStatus environmentStatus) {

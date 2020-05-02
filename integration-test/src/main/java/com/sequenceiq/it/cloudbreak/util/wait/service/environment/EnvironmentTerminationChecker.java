@@ -3,6 +3,8 @@ package com.sequenceiq.it.cloudbreak.util.wait.service.environment;
 import static com.sequenceiq.environment.api.v1.environment.model.response.EnvironmentStatus.ARCHIVED;
 import static com.sequenceiq.environment.api.v1.environment.model.response.EnvironmentStatus.DELETE_FAILED;
 
+import java.util.Map;
+
 import javax.ws.rs.ProcessingException;
 
 import org.slf4j.Logger;
@@ -80,21 +82,26 @@ public class EnvironmentTerminationChecker<T extends EnvironmentWaitObject> exte
             }
             return status.isFailed();
         } catch (ProcessingException clientException) {
-            StringBuilder builder = new StringBuilder("Exit waiting! Failed to get environment due to API client exception: ")
-                    .append(System.lineSeparator())
-                    .append(clientException.getMessage())
-                    .append(System.lineSeparator())
-                    .append(clientException);
-            LOGGER.error(builder.toString());
+            String builder = "Exit waiting! Failed to get environment due to API client exception: " +
+                    System.lineSeparator() +
+                    clientException.getMessage() +
+                    System.lineSeparator() +
+                    clientException;
+            LOGGER.error(builder);
         } catch (Exception e) {
-            StringBuilder builder = new StringBuilder("Exit waiting! Failed to get environment, because of: ")
-                    .append(System.lineSeparator())
-                    .append(e.getMessage())
-                    .append(System.lineSeparator())
-                    .append(e);
-            LOGGER.error(builder.toString());
+            String builder = "Exit waiting! Failed to get environment, because of: " +
+                    System.lineSeparator() +
+                    e.getMessage() +
+                    System.lineSeparator() +
+                    e;
+            LOGGER.error(builder);
             return true;
         }
         return false;
+    }
+
+    @Override
+    public Map<String, String> getStatuses(T waitObject) {
+        return Map.of("status", waitObject.getEndpoint().getByCrn(waitObject.getCrn()).getEnvironmentStatus().name());
     }
 }
