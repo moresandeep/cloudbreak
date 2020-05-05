@@ -67,6 +67,9 @@ public class AzureSetup implements Setup {
     @Inject
     private AzureStorage armStorage;
 
+    @Inject
+    private AzureResourceGroupNameProvider azureResourceGroupNameProvider;
+
     @Override
     public void prepareImage(AuthenticatedContext ac, CloudStack stack, Image image) {
         LOGGER.debug("Prepare image: {}", image);
@@ -86,8 +89,8 @@ public class AzureSetup implements Setup {
     private void copyVhdImageIfNecessary(AuthenticatedContext ac, CloudStack stack, Image image, String imageResourceGroupName,
             String region, AzureClient client) {
         AzureCredentialView acv = new AzureCredentialView(ac.getCloudCredential());
-        String imageStorageName = armStorage.getImageStorageName(acv, ac.getCloudContext(), stack);
-        String resourceGroupName = azureUtils.getResourceGroupName(ac.getCloudContext(), stack);
+        String imageStorageName = armStorage.getImageStorageName(acv, ac.getCloudContext());
+        String resourceGroupName = azureResourceGroupNameProvider.getResourceGroupName(ac.getCloudContext(), stack);
         if (!client.resourceGroupExists(resourceGroupName)) {
             client.createResourceGroup(resourceGroupName, region, stack.getTags());
         }
@@ -108,7 +111,7 @@ public class AzureSetup implements Setup {
         AzureClient client = ac.getParameter(AzureClient.class);
 
         AzureCredentialView acv = new AzureCredentialView(ac.getCloudCredential());
-        String imageStorageName = armStorage.getImageStorageName(acv, ac.getCloudContext(), stack);
+        String imageStorageName = armStorage.getImageStorageName(acv, ac.getCloudContext());
         try {
             CopyState copyState = client.getCopyStatus(imageResourceGroupName, imageStorageName, IMAGES_CONTAINER, image.getImageName());
             if (CopyStatus.SUCCESS.equals(copyState.getStatus())) {
@@ -136,7 +139,7 @@ public class AzureSetup implements Setup {
 
     @Override
     public void prerequisites(AuthenticatedContext ac, CloudStack stack, PersistenceNotifier persistenceNotifier) {
-        String resourceGroupName = azureUtils.getResourceGroupName(ac.getCloudContext(), stack);
+        String resourceGroupName = azureResourceGroupNameProvider.getResourceGroupName(ac.getCloudContext(), stack);
         CloudResource cloudResource = new Builder().type(ResourceType.ARM_TEMPLATE).name(resourceGroupName).build();
         String region = ac.getCloudContext().getLocation().getRegion().value();
         try {

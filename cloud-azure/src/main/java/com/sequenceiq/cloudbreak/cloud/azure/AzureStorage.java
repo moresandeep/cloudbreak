@@ -59,6 +59,9 @@ public class AzureStorage {
     @Inject
     private SkuTypeResolver skuTypeResolver;
 
+    @Inject
+    private AzureResourceGroupNameProvider azureResourceGroupNameProvider;
+
     public ArmAttachedStorageOption getArmAttachedStorageOption(Map<String, String> parameters) {
         String attachedStorageOption = parameters.get("attachedStorageOption");
         if (Strings.isNullOrEmpty(attachedStorageOption)) {
@@ -74,7 +77,7 @@ public class AzureStorage {
     public String getCustomImageId(AzureClient client, AuthenticatedContext ac, CloudStack stack, String imageName) {
         String imageResourceGroupName = getImageResourceGroupName(ac.getCloudContext(), stack);
         AzureCredentialView acv = new AzureCredentialView(ac.getCloudCredential());
-        String imageStorageName = getImageStorageName(acv, ac.getCloudContext(), stack);
+        String imageStorageName = getImageStorageName(acv, ac.getCloudContext());
         String imageBlobUri = client.getImageBlobUri(imageResourceGroupName, imageStorageName, IMAGES_CONTAINER, imageName);
         String region = ac.getCloudContext().getLocation().getRegion().value();
         return getCustomImageId(imageBlobUri, imageResourceGroupName, region, client);
@@ -86,21 +89,8 @@ public class AzureStorage {
         return customImageId;
     }
 
-    public String getImageStorageName(AzureCredentialView acv, CloudContext cloudContext, CloudStack stack) {
-        String storageName;
-        if (isLegacyImageStore(stack)) {
-            String persistentStorageName = getPersistentStorageName(stack);
-            storageName = isPersistentStorage(persistentStorageName)
-                    ? getPersistentStorageName(persistentStorageName, acv, cloudContext.getLocation().getRegion().value())
-                    : buildStorageName(getArmAttachedStorageOption(stack.getParameters()), acv, null, cloudContext, AzureDiskType.LOCALLY_REDUNDANT);
-        } else {
-            storageName = getPersistentStorageName(imageStorePrefix, acv, cloudContext.getLocation().getRegion().value());
-        }
-        return storageName;
-    }
-
-    private boolean isLegacyImageStore(CloudStack stack) {
-        return stack.getParameters().get("legacyImageStore") != null;
+    public String getImageStorageName(AzureCredentialView acv, CloudContext cloudContext) {
+        return getPersistentStorageName(imageStorePrefix, acv, cloudContext.getLocation().getRegion().value());
     }
 
     public String getAttachedDiskStorageName(ArmAttachedStorageOption armAttachedStorageOption, AzureCredentialView acv, Long vmId, CloudContext cloudContext,
@@ -175,15 +165,12 @@ public class AzureStorage {
         return !Strings.isNullOrEmpty(persistentStorageName);
     }
 
+    // TODO: check
     public String getImageResourceGroupName(CloudContext cloudContext, CloudStack stack) {
-        if (isLegacyImageStore(stack)) {
-            if (isPersistentStorage(getPersistentStorageName(stack))) {
-                return getPersistentStorageName(stack);
-            }
-            return armUtils.getResourceGroupName(cloudContext, stack);
-        } else {
-            return imageStoreResourceGroup;
-        }
+        return azureResourceGroupNameProvider.getResourceGroupName(cloudContext, stack);
+//        } else {
+//            return imageStoreResourceGroup;
+//        }
     }
 
     private boolean storageAccountExist(AzureClient client, String storageName) {

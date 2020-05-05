@@ -1,5 +1,20 @@
 package com.sequenceiq.cloudbreak.service.decorator;
 
+import static com.sequenceiq.cloudbreak.util.Benchmark.measure;
+
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+
+import javax.annotation.Nonnull;
+import javax.inject.Inject;
+
+import org.apache.commons.lang3.BooleanUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+
 import com.sequenceiq.cloudbreak.api.endpoint.v4.stacks.request.StackV4Request;
 import com.sequenceiq.cloudbreak.api.endpoint.v4.stacks.request.environment.placement.PlacementSettingsV4Request;
 import com.sequenceiq.cloudbreak.api.util.ConverterUtil;
@@ -41,19 +56,9 @@ import com.sequenceiq.cloudbreak.workspace.model.Workspace;
 import com.sequenceiq.common.api.type.AdjustmentType;
 import com.sequenceiq.common.api.type.CdpResourceType;
 import com.sequenceiq.common.api.type.InstanceGroupType;
+import com.sequenceiq.environment.api.v1.environment.model.request.azure.AzureEnvironmentParameters;
+import com.sequenceiq.environment.api.v1.environment.model.request.azure.AzureResourceGroup;
 import com.sequenceiq.environment.api.v1.environment.model.response.DetailedEnvironmentResponse;
-import org.apache.commons.lang3.BooleanUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
-
-import javax.annotation.Nonnull;
-import javax.inject.Inject;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
-import static com.sequenceiq.cloudbreak.util.Benchmark.measure;
 
 @Service
 public class StackDecorator {
@@ -118,7 +123,10 @@ public class StackDecorator {
         measure(() -> preparePlacement(subject, request, environment),
                 LOGGER, "Placement was prepared under {} ms for stack {}, stackName");
 
-        measure(() -> prepareDomainIfDefined(subject, request, user, workspace, credential),
+        measure(() -> prepareParameters(subject, environment),
+                LOGGER, "Parameters were prepared under {} ms for stack {}", stackName);
+
+        measure(() -> prepareDomainIfDefined(subject, credential),
                 LOGGER, "Domain was prepared under {} ms for stack {}", stackName);
 
         subject.setCloudPlatform(credential.cloudPlatform());
@@ -168,6 +176,19 @@ public class StackDecorator {
     private String getRegionFromEnv(DetailedEnvironmentResponse environment) {
         return environment.getRegions().getNames().stream()
                 .findFirst()
+                .orElse(null);
+    }
+
+    private void prepareParameters(Stack subject, DetailedEnvironmentResponse environment) {
+        if (CloudPlatform.AZURE.name().equals(environment.getCloudPlatform())) {
+            subject.getParameters().put("resourceGroupName", getResourceGroupFromEnv(environment));
+        }
+    }
+
+    private String getResourceGroupFromEnv(DetailedEnvironmentResponse environment) {
+        return Optional.of(environment.getAzure())
+                .map(AzureEnvironmentParameters::getResourceGroup)
+                .map(AzureResourceGroup::getName)
                 .orElse(null);
     }
 
@@ -249,7 +270,7 @@ public class StackDecorator {
         }
     }
 
-    private void prepareDomainIfDefined(Stack subject, StackV4Request request, User user, Workspace workspace, Credential credential) {
+    private void prepareDomainIfDefined(Stack subject, Credential credential) {
         if (subject.getNetwork() != null) {
             Network network = subject.getNetwork();
             if (network.getId() == null) {

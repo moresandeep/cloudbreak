@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 
 import com.microsoft.azure.management.compute.Disk;
 import com.microsoft.azure.management.compute.VirtualMachine;
-import com.sequenceiq.cloudbreak.cloud.azure.AzureUtils;
+import com.sequenceiq.cloudbreak.cloud.azure.AzureResourceGroupNameProvider;
 import com.sequenceiq.cloudbreak.cloud.azure.client.AzureClient;
 import com.sequenceiq.cloudbreak.cloud.azure.context.AzureContext;
 import com.sequenceiq.cloudbreak.cloud.context.AuthenticatedContext;
@@ -29,7 +29,7 @@ public class AzureAttachmentResourceBuilder extends AbstractAzureComputeBuilder 
     private static final Logger LOGGER = LoggerFactory.getLogger(AzureAttachmentResourceBuilder.class);
 
     @Inject
-    private AzureUtils azureUtils;
+    private AzureResourceGroupNameProvider azureResourceGroupNameProvider;
 
     @Override
     public List<CloudResource> create(AzureContext context, long privateId, AuthenticatedContext auth, Group group, Image image) {
@@ -54,7 +54,7 @@ public class AzureAttachmentResourceBuilder extends AbstractAzureComputeBuilder 
                 .orElseThrow(() -> new AzureResourceException("Volume set resource not found"));
 
         CloudContext cloudContext = auth.getCloudContext();
-        String resourceGroupName = azureUtils.getResourceGroupName(cloudContext, cloudStack);
+        String resourceGroupName = azureResourceGroupNameProvider.getResourceGroupName(cloudContext, cloudStack);
         AzureClient client = getAzureClient(auth);
 
         VolumeSetAttributes volumeSetAttributes = getVolumeSetAttributes(volumeSet);
