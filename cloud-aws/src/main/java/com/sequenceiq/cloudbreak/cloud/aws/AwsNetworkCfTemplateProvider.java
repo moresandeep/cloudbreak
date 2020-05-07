@@ -10,6 +10,7 @@ import javax.inject.Inject;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import com.sequenceiq.cloudbreak.cloud.aws.conf.VpcServiceEndpointConfigs;
 import com.sequenceiq.cloudbreak.cloud.exception.CloudConnectorException;
 import com.sequenceiq.cloudbreak.cloud.model.network.SubnetRequest;
 import com.sequenceiq.cloudbreak.util.FreeMarkerTemplateUtils;
@@ -30,6 +31,9 @@ public class AwsNetworkCfTemplateProvider {
     @Inject
     private FreeMarkerTemplateUtils freeMarkerTemplateUtils;
 
+    @Inject
+    private VpcServiceEndpointConfigs vpcServiceEndpointConfigs;
+
     public String provide(String envName, Long envId, String vpcCidr, List<SubnetRequest> subnets, boolean privateSubnetEnabled) {
 
         Map<String, Object> model = createModel(envName, envId, vpcCidr, subnets, privateSubnetEnabled);
@@ -49,6 +53,9 @@ public class AwsNetworkCfTemplateProvider {
         model.put("vpcCidr", vpcCidr);
         model.put("subnetDetails", subnets);
         model.put("privateSubnetEnabled", privateSubnetEnabled);
+        model.put("vpcGatewayEndpoints", vpcServiceEndpointConfigs.getGatewayServicesEnabled() ? vpcServiceEndpointConfigs.getGatewayServices() : List.of());
+        model.put("vpcInterfaceEndpoints",
+                vpcServiceEndpointConfigs.getInterfaceServicesEnabled() ? vpcServiceEndpointConfigs.getInterfaceServices() : List.of());
         return model;
     }
 }

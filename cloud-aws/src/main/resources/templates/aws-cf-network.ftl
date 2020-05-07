@@ -33,6 +33,22 @@
        }
     },
 
+    "EndpointSecurityGroup" : {
+      "Type" : "AWS::EC2::SecurityGroup",
+      "Properties" : {
+        "GroupDescription" : "groupdesc",
+        "SecurityGroupIngress" : [{
+          "IpProtocol" : "-1",
+          "CidrIp" : "${vpcCidr}"
+        }],
+        "VpcId" : { "Ref" : "VPC" },
+        "Tags" : [
+          { "Key" : "Application", "Value" : { "Ref" : "AWS::StackId" } },
+          { "Key" : "Name", "Value" : "vpcep-sg-${environmentId}" }
+        ]
+      }
+    },
+
     <#list subnetDetails as subnet>
     <#if subnet.publicSubnetCidr?has_content>
     "PubS${subnet.index}" : {
@@ -120,36 +136,42 @@
     </#list>
 
     <#if privateSubnetEnabled == true>
-    "S3Endpoint" : {
+    <#list vpcGatewayEndpoints as vpcGatewayEndpoint>
+    "${vpcGatewayEndpoint?replace("[-\\.]", "")}Endpoint" : {
       "Type" : "AWS::EC2::VPCEndpoint",
       "Properties" : {
         "RouteTableIds" : [
-         {"Ref" : "PublicRouteTable"} <#if privateSubnetEnabled == true>, </#if>
-        <#list subnetDetails as subnet>
+          {"Ref" : "PublicRouteTable"} <#if privateSubnetEnabled == true>, </#if>
+          <#list subnetDetails as subnet>
             <#if subnet.privateSubnetCidr?has_content>
-             {"Ref" : "PRT${subnet.index}"}<#if subnet_has_next>,</#if>
+              {"Ref" : "PRT${subnet.index}"}<#if subnet_has_next>,</#if>
             </#if>
-        </#list>
+          </#list>
         ],
-        "ServiceName" : { "Fn::Sub": "com.amazonaws.${r"${AWS::Region}"}.s3" },
+        "ServiceName" : { "Fn::Sub": "com.amazonaws.${r"${AWS::Region}"}.${vpcGatewayEndpoint}" },
         "VpcId" : {"Ref" : "VPC"}
       }
     },
-    "DDBEndpoint" : {
+    </#list>
+    <#list vpcInterfaceEndpoints as vpcInterfaceEndpoint>
+    "${vpcInterfaceEndpoint?replace("[-\\.]", "", "r")}Endpoint" : {
       "Type" : "AWS::EC2::VPCEndpoint",
       "Properties" : {
-        "RouteTableIds" : [
-         {"Ref" : "PublicRouteTable"} <#if privateSubnetEnabled == true>, </#if>
+        "PrivateDnsEnabled" : "true",
+        "SecurityGroupIds" : [{ "Ref" : "EndpointSecurityGroup" }],
+        "ServiceName" : { "Fn::Sub": "com.amazonaws.${r"${AWS::Region}"}.${vpcInterfaceEndpoint}" },
+        "SubnetIds" : [
         <#list subnetDetails as subnet>
-            <#if subnet.privateSubnetCidr?has_content>
-             {"Ref" : "PRT${subnet.index}"}<#if subnet_has_next>,</#if>
-            </#if>
+          <#if subnet.privateSubnetCidr?has_content>
+          {"Ref" : "PrvS${subnet.index}"}<#if subnet_has_next>,</#if>
+          </#if>
         </#list>
         ],
-        "ServiceName" : { "Fn::Sub": "com.amazonaws.${r"${AWS::Region}"}.dynamodb" },
+        "VpcEndpointType" : "Interface",
         "VpcId" : {"Ref" : "VPC"}
       }
     },
+    </#list>
     </#if>
 
     "PublicRouteTable" : {

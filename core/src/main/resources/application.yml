@@ -170,6 +170,13 @@ cb:
     cf.template.newdb.path: templates/aws-cf-dbstack.ftl
     default.inbound.security.group:
     vpc:
+    vpcendpoints:
+      gateway:
+        enabled: true
+        services: s3,dynamodb
+      interface:
+        enabled: true
+        services: autoscaling,cloudformation,ec2,ecr.api,ecr.dkr,elasticfilesystem,elasticloadbalancing,sts
     externaldatabase.retentionperiod: 0
     credential.cache.ttl: 60
 
